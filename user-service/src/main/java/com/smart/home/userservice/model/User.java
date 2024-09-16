@@ -50,7 +50,7 @@ public class User {
     @Size(min = 8, max = 100, message = DescriptionVariables.PASSWORD_SIZE)
     private String password;
 
-    @Column(name = "email")
+    @Column(name = "email", nullable = false, unique = true)
     @Schema(description = "Email")
     @NotBlank(message = "Email must not be null")
     @Email(message = DescriptionVariables.EMAIL_REGEX, regexp = "^(?=.{1,64}@)[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)*@[^-][A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$")

@@ -1,0 +1,58 @@
+services:
+  userservice:
+    build: user-service
+    ports:
+      - 9091:9091
+    environment:
+      - MYSQL_DATABASE=smart_home_db
+    networks:
+      - smart-home-net
+
+  deviceservice:
+    build: device-service
+    ports:
+      - 9092:9092
+    environment:
+      - MYSQL_DATABASE=smart_home_db
+    networks:
+      - smart-home-net
+
+  scenarioservice:
+    build: scenario-service
+    ports:
+      - 9093:9093
+    environment:
+      - MYSQL_DATABASE=smart_home_db
+    networks:
+      - smart-home-net
+
+  weatherservice:
+    build: weather-service
+    ports:
+      - 9094:9094
+    networks:
+      - smart-home-net
+
+  db:
+    image: mariadb:10.6.4-focal
+    restart: always
+    secrets:
+      - db-password
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - smart-home-net
+    environment:
+      - MYSQL_DATABASE=smart_home_db
+      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/db-password
+    expose:
+      - 3306
+      - 33060
+volumes:
+  db-data:
+secrets:
+  db-password:
+    file: db/password.txt
+networks:
+  smart-home-net:
