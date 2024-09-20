@@ -1,4 +1,4 @@
-package com.smart.home.deviceservice.intergation;
+package com.smart.home.deviceservice.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smart.home.deviceservice.client.AuthClient;
@@ -11,12 +11,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.cache.CacheManager;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.hamcrest.Matchers.hasSize;
@@ -36,6 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
+@ActiveProfiles("localhost")
 @AutoConfigureMockMvc
 public class DeviceTypeServiceEndToEndTest {
 
@@ -53,12 +57,19 @@ public class DeviceTypeServiceEndToEndTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private CacheManager cacheManager;
+
     private DeviceType validDeviceType;
     private DeviceTypeDAO validDeviceTypeDAO;
     private DeviceType deviceTypeWithId;
     private DeviceTypeDAO deviceTypeDAOWithId;
-    private DeviceType invalidDeviceType;
     private String token;
+
+    @BeforeEach
+    void clearCache(){
+        Objects.requireNonNull(cacheManager.getCache("deviceType")).clear();
+    }
 
     @BeforeEach
     void setUp() {
@@ -73,7 +84,6 @@ public class DeviceTypeServiceEndToEndTest {
 
         deviceTypeDAOWithId = new DeviceTypeDAO(1L, "Thermostat");
 
-        invalidDeviceType = new DeviceType();
         token = "Bearer test-token";
     }
 

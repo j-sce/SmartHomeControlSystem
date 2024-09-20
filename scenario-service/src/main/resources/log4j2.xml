@@ -25,5 +25,6 @@
             <AppenderRef ref="RollingFile"/>
         </Root>
         <Logger name="com.smart.home.scenarioservice" level="trace"/>
+        <Logger name="org.springframework.cache" level="trace"/>
     </Loggers>
 </Configuration>

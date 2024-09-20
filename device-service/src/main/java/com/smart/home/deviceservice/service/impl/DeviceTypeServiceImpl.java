@@ -8,6 +8,9 @@ import com.smart.home.deviceservice.repository.model.DeviceTypeDAO;
 import com.smart.home.deviceservice.service.DeviceTypeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +38,7 @@ public class DeviceTypeServiceImpl implements DeviceTypeService {
     }
 
     @Override
+    @CachePut(value = "deviceType", key = "#deviceTypeId")
     public DeviceType updateDeviceTypeById(Long deviceTypeId, String deviceTypeUpdate) {
         log.debug("Updating device type with id: {}", deviceTypeId);
         DeviceTypeDAO existingDeviceTypeDAO = getDeviceTypeDAOById(deviceTypeId);
@@ -46,6 +50,7 @@ public class DeviceTypeServiceImpl implements DeviceTypeService {
     }
 
     @Override
+    @CacheEvict(value = "deviceType", key = "#deviceTypeId")
     public void deleteDeviceTypeById(Long deviceTypeId) {
         log.debug("Deleting device type with id: {}", deviceTypeId);
         DeviceTypeDAO deviceTypeDAO = getDeviceTypeDAOById(deviceTypeId);
@@ -55,6 +60,7 @@ public class DeviceTypeServiceImpl implements DeviceTypeService {
     }
 
     @Override
+    @Cacheable(value = "deviceType", key = "#deviceTypeId")
     public DeviceType getDeviceTypeById(Long deviceTypeId) {
         log.debug("Getting device type with id: {}", deviceTypeId);
         DeviceTypeDAO deviceTypeDAO = getDeviceTypeDAOById(deviceTypeId);

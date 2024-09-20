@@ -36,6 +36,9 @@ out/
 !**/src/main/**/out/
 !**/src/test/**/out/
 
+.db
+.db/*
+
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/

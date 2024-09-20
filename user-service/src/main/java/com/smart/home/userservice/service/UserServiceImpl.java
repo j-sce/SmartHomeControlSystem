@@ -132,6 +132,21 @@ public class UserServiceImpl implements UserService {
     @Override
     public Boolean validateToken(TokenValidationRequest request) {
         log.debug("Validating token.");
+
+        String username;
+        try {
+            username = jwtTokenService.extractUsernameFromToken(request.getToken());
+        } catch (IllegalArgumentException e){
+            log.warn("Token does not contain a valid username or is expired.");
+            return false;
+        }
+
+        Optional<User> userOptional = userRepository.findByUsername(username);
+        if (userOptional.isEmpty()) {
+            log.warn("User with username {} not found.", username);
+            return false;
+        }
+
         boolean isValid = jwtTokenService.validateToken(request.getToken());
         if (!isValid) {
             log.warn("Token is not valid.");

@@ -1,4 +1,4 @@
-package com.smart.home.deviceservice.intergation.client;
+package com.smart.home.deviceservice.integration.client;
 
 import com.smart.home.deviceservice.client.ScenarioClient;
 import com.smart.home.deviceservice.model.dto.ScenarioDTO;
@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
@@ -20,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles("localhost")
 public class ScenarioClientIntegrationTest {
 
     @Autowired

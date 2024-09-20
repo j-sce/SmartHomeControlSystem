@@ -14,13 +14,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.cache.CacheManager;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -41,6 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
+@ActiveProfiles("localhost")
 @AutoConfigureMockMvc
 public class ScenarioServiceAppEndToEndTest {
 
@@ -61,6 +65,9 @@ public class ScenarioServiceAppEndToEndTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private CacheManager cacheManager;
+
     private Scenario validScenario;
     private ScenarioDAO validScenarioDAO;
     private Scenario scenarioWithId;
@@ -69,6 +76,10 @@ public class ScenarioServiceAppEndToEndTest {
     private DeviceTypeDTO deviceTypeDTO;
     private String token;
 
+    @BeforeEach
+    void clearCache(){
+        Objects.requireNonNull(cacheManager.getCache("scenario")).clear();
+    }
 
     @BeforeEach
     void setUp() {

@@ -1,4 +1,4 @@
-package com.smart.home.deviceservice.intergation;
+package com.smart.home.deviceservice.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smart.home.deviceservice.client.AuthClient;
@@ -12,13 +12,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.cache.CacheManager;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -40,6 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
+@ActiveProfiles("localhost")
 @AutoConfigureMockMvc
 public class DeviceServiceEndToEndTest {
 
@@ -57,12 +61,20 @@ public class DeviceServiceEndToEndTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private CacheManager cacheManager;
+
     private Device validDevice;
     private DeviceDAO validDeviceDAO;
     private Device deviceWithId;
     private DeviceDAO deviceDAOWithId;
     private Device invalidDevice;
     private String token;
+
+    @BeforeEach
+    void clearCache(){
+        Objects.requireNonNull(cacheManager.getCache("device")).clear();
+    }
 
     @BeforeEach
     void setUp() {

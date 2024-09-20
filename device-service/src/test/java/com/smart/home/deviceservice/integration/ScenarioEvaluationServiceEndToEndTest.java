@@ -1,4 +1,4 @@
-package com.smart.home.deviceservice.intergation;
+package com.smart.home.deviceservice.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smart.home.deviceservice.client.AuthClient;
@@ -18,10 +18,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.cache.CacheManager;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -36,6 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
+@ActiveProfiles("localhost")
 @AutoConfigureMockMvc
 public class ScenarioEvaluationServiceEndToEndTest {
 
@@ -62,22 +66,27 @@ public class ScenarioEvaluationServiceEndToEndTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private CacheManager cacheManager;
+
     private String token;
 
     @BeforeEach
     void setUp() {
+        Objects.requireNonNull(cacheManager.getCache("device")).clear();
+        Objects.requireNonNull(cacheManager.getCache("deviceType")).clear();
         token = "Bearer test-token";
     }
 
     @Test
     void testEvaluateScenariosAndPerformActions_Success() throws Exception {
         ScenarioDTO scenario = new ScenarioDTO();
+        scenario.setScenarioId(200L);
         scenario.setWeatherCondition("temperature");
         scenario.setDeviceTypeId(101L);
         scenario.setOperator(">");
         scenario.setConditionValue("20");
         scenario.setNewStatus("ON");
-        scenario.setScenarioId(200L);
 
         DeviceDAO deviceDAO = new DeviceDAO();
         deviceDAO.setDeviceId(1L);

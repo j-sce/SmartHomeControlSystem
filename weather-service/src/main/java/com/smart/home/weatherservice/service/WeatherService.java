@@ -8,6 +8,7 @@ import com.smart.home.weatherservice.handler.BadRequestException;
 import com.smart.home.weatherservice.model.WeatherData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -24,6 +25,7 @@ public class WeatherService {
     private final WeatherDataClient weatherDataClient;
 
 
+    @Cacheable(value = "weatherData", key = "#lat + ',' + #lon")
     public WeatherData getWeatherData(double lat, double lon) {
         String jsonString = getWeather(lat, lon);
         log.info("Weather data: {}", jsonString);

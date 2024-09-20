@@ -285,12 +285,18 @@ class UserServiceImplTest {
     void validateToken_Success() {
         TokenValidationRequest tokenValidationRequest = new TokenValidationRequest();
         tokenValidationRequest.setToken("Bearer test-token");
+        User user = new User("testuser", "validEmail", "$2a$12$IETFUcW.CaFdEe3/PhOGxu4UDYGiL84U0iWTXT7DKLX4fYskOEZ/i");
+        user.setRoles(Set.of());
 
+        when(jwtTokenService.extractUsernameFromToken(anyString())).thenReturn("testuser");
+        when(userRepository.findByUsername(anyString())).thenReturn(Optional.of(user));
         when(jwtTokenService.validateToken(anyString())).thenReturn(true);
 
         Boolean isValid = userService.validateToken(tokenValidationRequest);
 
         assertTrue(isValid);
+        verify(jwtTokenService, times(1)).extractUsernameFromToken(anyString());
+        verify(userRepository, times(1)).findByUsername(anyString());
         verify(jwtTokenService, times(1)).validateToken(anyString());
     }
 
@@ -299,12 +305,12 @@ class UserServiceImplTest {
         TokenValidationRequest tokenValidationRequest = new TokenValidationRequest();
         tokenValidationRequest.setToken("Bearer invalidToken");
 
-        when(jwtTokenService.validateToken(anyString())).thenReturn(false);
+        when(jwtTokenService.extractUsernameFromToken(anyString())).thenThrow(IllegalArgumentException.class);
 
         Boolean isValid = userService.validateToken(tokenValidationRequest);
 
         assertFalse(isValid);
-        verify(jwtTokenService, times(1)).validateToken(anyString());
+        verify(jwtTokenService, times(1)).extractUsernameFromToken(anyString());
     }
 
 }

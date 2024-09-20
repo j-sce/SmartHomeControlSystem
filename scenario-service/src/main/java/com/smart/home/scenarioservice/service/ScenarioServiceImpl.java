@@ -8,6 +8,9 @@ import com.smart.home.scenarioservice.repository.ScenarioRepository;
 import com.smart.home.scenarioservice.repository.model.ScenarioDAO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -36,6 +39,7 @@ public class ScenarioServiceImpl implements ScenarioService {
     }
 
     @Override
+    @CachePut(value = "scenario", key = "#scenarioId")
     public Scenario updateScenarioById(Long scenarioId, Scenario scenarioUpdate, String token) {
         log.debug("Updating scenario with id: {}", scenarioId);
         validateDeviceType(scenarioUpdate.getDeviceTypeId(), token);
@@ -50,6 +54,7 @@ public class ScenarioServiceImpl implements ScenarioService {
     }
 
     @Override
+    @CacheEvict(value = "scenario", key = "#scenarioId")
     public void deleteScenarioById(Long scenarioId) {
         log.debug("Deleting scenario with id: {}", scenarioId);
         ScenarioDAO scenarioDAO = getScenarioDAOById(scenarioId);
@@ -59,6 +64,7 @@ public class ScenarioServiceImpl implements ScenarioService {
     }
 
     @Override
+    @Cacheable(value = "scenario", key = "#scenarioId")
     public Scenario getScenarioById(Long scenarioId) {
         log.debug("Getting scenario with id: {}", scenarioId);
         ScenarioDAO scenarioDAO = getScenarioDAOById(scenarioId);

@@ -9,10 +9,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.cache.CacheManager;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -25,6 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
+@ActiveProfiles("localhost")
 @AutoConfigureMockMvc
 public class WeatherServiceAppEndToEndTest {
 
@@ -39,9 +43,17 @@ public class WeatherServiceAppEndToEndTest {
     @MockBean
     private WeatherDataClient weatherDataClient;
 
+    @Autowired
+    private CacheManager cacheManager;
+
     private WeatherData weatherData;
     String weatherDataString = "{\"coord\":{\"lon\":-16.181418,\"lat\":64.049075},\"weather\":[{\"id\":800,\"main\":\"Clear\",\"description\":\"clear sky\",\"icon\":\"01d\"}],\"base\":\"stations\",\"main\":{\"temp\":15.00,\"feels_like\":21.15,\"temp_min\":21.63,\"temp_max\":22.67,\"pressure\":1006,\"humidity\":85,\"sea_level\":1006,\"grnd_level\":1005},\"visibility\":10000,\"wind\":{\"speed\":5.5,\"deg\":170},\"clouds\":{\"all\":50},\"dt\":1725964611,\"sys\":{\"type\":2,\"id\":2075320,\"country\":\"LV\",\"sunrise\":1725939874,\"sunset\":1725987378},\"timezone\":10800,\"id\":6615326,\"name\":\"Vecr?ga\",\"cod\":200}";
     private String token;
+
+    @BeforeEach
+    void clearCache(){
+        Objects.requireNonNull(cacheManager.getCache("weatherData")).clear();
+    }
 
     @BeforeEach
     void setUp() {

@@ -1,4 +1,4 @@
-package com.smart.home.deviceservice.intergation;
+package com.smart.home.deviceservice.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smart.home.deviceservice.client.AuthClient;
@@ -13,10 +13,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.cache.CacheManager;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.hamcrest.Matchers.is;
@@ -31,6 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @SpringBootTest
+@ActiveProfiles("localhost")
 @AutoConfigureMockMvc
 public class DeviceStatusChangeServiceEndToEndTest {
 
@@ -51,9 +55,17 @@ public class DeviceStatusChangeServiceEndToEndTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private CacheManager cacheManager;
+
     private DeviceStatusChangeDAO deviceStatusChangeDAO;
     private DeviceDAO deviceDAO;
     private String token;
+
+    @BeforeEach
+    void clearCache(){
+        Objects.requireNonNull(cacheManager.getCache("device")).clear();
+    }
 
     @BeforeEach
     void setUp() {

@@ -11,6 +11,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Optional;
@@ -26,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
+@ActiveProfiles("localhost")
 @AutoConfigureMockMvc
 public class AuthServiceEndToEndTest {
 
@@ -150,7 +152,7 @@ public class AuthServiceEndToEndTest {
         user.setRoles(Set.of());
         when(userRepository.findByUsername(anyString())).thenReturn(Optional.of(user));
 
-        TokenValidationRequest request = new TokenValidationRequest("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0dXNlciIsInJvbGVzIjpbXSwiaWF0IjoxNzI2MDUyMjYxLCJleHAiOjE3MjYxMzg2NjF9.P5-PEr6_7bhqqCPUcp3l0zLmIrlVTgzyRmrCvsAA1AY");
+        TokenValidationRequest request = new TokenValidationRequest("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0dXNlciIsInJvbGVzIjpbXSwiaWF0IjoxNzI2ODI4NDQ3LCJleHAiOjE3MjY5MTQ4NDd9.vje0CunZBhfVb9y7TwYHzBo6Vka2t73tniJsH6ANkbo");
 
         mockMvc.perform(post("/api/auth/token/validate")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -160,8 +162,9 @@ public class AuthServiceEndToEndTest {
     }
 
     @Test
-    void validateToken_InvalidToken() throws Exception {
-        TokenValidationRequest request = new TokenValidationRequest("invalidToken");
+    void validateToken_UserNotFound() throws Exception {
+        when(userRepository.findByUsername(anyString())).thenReturn(Optional.empty());
+        TokenValidationRequest request = new TokenValidationRequest("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0dXNlciIsInJvbGVzIjpbXSwiaWF0IjoxNzI2ODI4NDQ3LCJleHAiOjE3MjY5MTQ4NDd9.vje0CunZBhfVb9y7TwYHzBo6Vka2t73tniJsH6ANkbo");
 
         mockMvc.perform(post("/api/auth/token/validate")
                         .contentType(MediaType.APPLICATION_JSON)

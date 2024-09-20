@@ -49,6 +49,14 @@ services:
     expose:
       - 3306
       - 33060
+
+  redis:
+    image: redis
+    ports:
+      - 6379:6379
+    networks:
+      - smart-home-net
+
 volumes:
   db-data:
 secrets:

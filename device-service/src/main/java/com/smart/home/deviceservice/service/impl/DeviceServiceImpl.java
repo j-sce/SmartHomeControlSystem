@@ -9,6 +9,9 @@ import com.smart.home.deviceservice.service.DeviceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -36,6 +39,7 @@ public class DeviceServiceImpl implements DeviceService {
     }
 
     @Override
+    @CacheEvict(value = "device", key = "#deviceId")
     public Device updateDeviceById(Long deviceId, Device deviceUpdate) {
         log.debug("Updating device with id: {}", deviceId);
         DeviceDAO existingDeviceDAO = getDeviceDAOById(deviceId);
@@ -49,6 +53,7 @@ public class DeviceServiceImpl implements DeviceService {
     }
 
     @Override
+    @CacheEvict(value = "device", key = "#deviceId")
     public void deleteDeviceById(Long deviceId) {
         log.debug("Deleting device with id: {}", deviceId);
         DeviceDAO deviceDAO = getDeviceDAOById(deviceId);
@@ -58,6 +63,7 @@ public class DeviceServiceImpl implements DeviceService {
     }
 
     @Override
+    @Cacheable(value = "device", key = "#deviceId")
     public Device getDeviceById(Long deviceId) {
         log.debug("Getting device with id: {}", deviceId);
         DeviceDAO deviceDAO = getDeviceDAOById(deviceId);

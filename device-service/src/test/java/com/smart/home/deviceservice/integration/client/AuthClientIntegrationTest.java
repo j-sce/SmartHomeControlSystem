@@ -1,4 +1,4 @@
-package com.smart.home.deviceservice.intergation.client;
+package com.smart.home.deviceservice.integration.client;
 
 import com.smart.home.deviceservice.client.AuthClient;
 import okhttp3.mockwebserver.MockResponse;
@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
@@ -18,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles("localhost")
 public class AuthClientIntegrationTest {
 
     @Autowired

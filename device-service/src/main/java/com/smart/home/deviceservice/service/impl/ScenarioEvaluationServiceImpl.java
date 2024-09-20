@@ -46,6 +46,7 @@ public class ScenarioEvaluationServiceImpl implements ScenarioEvaluationService 
                         );
                     }
                 } catch (IllegalArgumentException | BadRequestException e) {
+                    log.error("Error evaluating scenario for device {}: {}", device.getDeviceId(), e.getMessage(), e);
                     continue;
                 }
             }
