@@ -52,7 +52,8 @@ public class WeatherServiceAppEndToEndTest {
 
     @BeforeEach
     void clearCache(){
-        Objects.requireNonNull(cacheManager.getCache("weatherData")).clear();
+        cacheManager.getCacheNames().stream()
+                .forEach(cacheName -> Objects.requireNonNull(cacheManager.getCache(cacheName)).clear());
     }
 
     @BeforeEach
@@ -68,6 +69,22 @@ public class WeatherServiceAppEndToEndTest {
         weatherData.setSunset(LocalDateTime.now().plusHours(5));
 
         token = "Bearer test-token";
+    }
+
+    @Test
+    void testGetWeather_NoWeatherDataFound() throws Exception {
+        when(authClient.validateToken(anyString())).thenReturn(true);
+        when(weatherDataClient.getWeatherData(anyDouble(),anyDouble())).thenReturn(null);
+
+        mockMvc.perform(get(URL)
+                        .header("Authorization", token)
+                        .param("lat", "44.2")
+                        .param("lon", "-37.1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("No weather data found."));
+
+        verify(authClient, times(1)).validateToken((anyString()));
+        verify(weatherDataClient, times(1)).getWeatherData(anyDouble(),anyDouble());
     }
 
     @Test
@@ -87,22 +104,6 @@ public class WeatherServiceAppEndToEndTest {
                 .andExpect(jsonPath("$.humidity").value(weatherData.getHumidity()))
                 .andExpect(jsonPath("$.windSpeed").value(weatherData.getWindSpeed()))
                 .andExpect(jsonPath("$.cloudiness").value(weatherData.getCloudiness()));
-
-        verify(authClient, times(1)).validateToken((anyString()));
-        verify(weatherDataClient, times(1)).getWeatherData(anyDouble(),anyDouble());
-    }
-
-    @Test
-    void testGetWeather_NoWeatherDataFound() throws Exception {
-        when(authClient.validateToken(anyString())).thenReturn(true);
-        when(weatherDataClient.getWeatherData(anyDouble(),anyDouble())).thenReturn(null);
-
-        mockMvc.perform(get(URL)
-                        .header("Authorization", token)
-                        .param("lat", "64.049075")
-                        .param("lon", "-16.181418"))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string("No weather data found."));
 
         verify(authClient, times(1)).validateToken((anyString()));
         verify(weatherDataClient, times(1)).getWeatherData(anyDouble(),anyDouble());
@@ -147,4 +148,55 @@ public class WeatherServiceAppEndToEndTest {
         verify(weatherDataClient, times(0)).getWeatherData(anyDouble(),anyDouble());
     }
 
+    @Test
+    void testGetWeatherData_CacheHit() throws Exception {
+        when(authClient.validateToken(anyString())).thenReturn(true);
+
+        cacheManager.getCache("weatherData").put("weather:64.049075:-16.181418", weatherData);
+
+        mockMvc.perform(get(URL)
+                        .header("Authorization", token)
+                        .param("lat", "64.049075")
+                        .param("lon", "-16.181418"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.latitude").value(weatherData.getLatitude()))
+                .andExpect(jsonPath("$.longitude").value(weatherData.getLongitude()));
+
+        verify(weatherDataClient, times(0)).getWeatherData(anyDouble(), anyDouble());
+    }
+
+    @Test
+    void testGetWeatherData_CacheDistanceBoundary() throws Exception {
+        when(authClient.validateToken(anyString())).thenReturn(true);
+        when(weatherDataClient.getWeatherData(anyDouble(), anyDouble())).thenReturn(weatherDataString);
+
+        cacheManager.getCache("weatherData").put("weather:64.049075:-16.181418", weatherData);
+
+        mockMvc.perform(get(URL)
+                        .header("Authorization", token)
+                        .param("lat", "64.049075")
+                        .param("lon", "-16.181418"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.latitude").value(weatherData.getLatitude()))
+                .andExpect(jsonPath("$.longitude").value(weatherData.getLongitude()));
+
+        verify(weatherDataClient, times(0)).getWeatherData(anyDouble(), anyDouble());
+    }
+
+    @Test
+    void testGetWeatherData_InvalidJson() throws Exception {
+        when(authClient.validateToken(anyString())).thenReturn(true);
+        when(weatherDataClient.getWeatherData(anyDouble(), anyDouble())).thenReturn("invalid json");
+
+        mockMvc.perform(get(URL)
+                        .header("Authorization", token)
+                        .param("lat", "80.0")
+                        .param("lon", "-20.0"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Error occurred during deserialization"));
+
+        verify(weatherDataClient, times(1)).getWeatherData(anyDouble(), anyDouble());
+    }
 }

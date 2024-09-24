@@ -8,13 +8,23 @@ import com.smart.home.weatherservice.handler.BadRequestException;
 import com.smart.home.weatherservice.model.WeatherData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.geo.Circle;
+import org.springframework.data.geo.Distance;
+import org.springframework.data.geo.GeoResult;
+import org.springframework.data.geo.GeoResults;
+import org.springframework.data.geo.Point;
+import org.springframework.data.redis.connection.RedisGeoCommands;
+import org.springframework.data.redis.core.GeoOperations;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Log4j2
@@ -23,16 +33,29 @@ import java.util.List;
 public class WeatherService {
 
     private final WeatherDataClient weatherDataClient;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private static final String GEO_KEY = "weather";
 
+    @Value("${weather.cache.ttl:5}")
+    private Integer ttlMinutes;
+    @Value("${weather.cache.distance:1.0}")
+    private Double cacheDistance;
 
-    @Cacheable(value = "weatherData", key = "#lat + ',' + #lon")
     public WeatherData getWeatherData(double lat, double lon) {
+        // Check if data exists in cache within cache distance radius
+        WeatherData cachedWeatherData = getCachedWeatherData(lat, lon);
+        if (cachedWeatherData != null) {
+            return cachedWeatherData;
+        }
+
+        // Get data from external API
         String jsonString = getWeather(lat, lon);
-        log.info("Weather data: {}", jsonString);
+        WeatherData weatherData = parseWeatherData(jsonString);
+        // Cache the fetched weather data
+        cacheWeatherData(lat, lon, weatherData);
 
-        return parseWeatherData(jsonString);
+        return weatherData;
     }
-
 
     String getWeather(double lat, double lon) {
         log.debug("Getting weather data from OpenWeatherMap API");
@@ -90,7 +113,7 @@ public class WeatherService {
         } catch (JsonProcessingException e) {
             log.error("JsonProcessingException while parsing weather data: {}", e.getMessage());
             throw new BadRequestException("Error occurred during deserialization");
-        } catch (Exception e){
+        } catch (Exception e) {
             log.error("Unexpected error while parsing weather data: {}", e.getMessage());
             throw new BadRequestException("Unexpected error while parsing weather data");
         }
@@ -100,6 +123,48 @@ public class WeatherService {
         return Instant.ofEpochSecond(timestamp)
                 .atZone(ZoneId.systemDefault())
                 .toLocalDateTime();
+    }
+
+    public void cacheWeatherData(double lat, double lon, WeatherData weatherData) {
+        log.info("Caching weather data: {}", weatherData);
+        GeoOperations<String, Object> geoOps = redisTemplate.opsForGeo();
+
+        // Unique key for storing weather data and geospatial info
+        String weatherKey = "weather:" + lat + ":" + lon;
+
+        // Cache weather data
+        redisTemplate.opsForValue().set(weatherKey, weatherData, Duration.ofMinutes(ttlMinutes));
+
+        // Add geolocation
+        geoOps.add(GEO_KEY, new Point(lon, lat), weatherKey);
+        log.info("Cached weather data for lat={}, lon={}", lat, lon);
+    }
+
+    public WeatherData getCachedWeatherData(double lat, double lon) {
+        log.info("Getting cached weather data.");
+        try {
+            GeoOperations<String, Object> geoOps = redisTemplate.opsForGeo();
+            // Search within cacheDistance radius for cached weather data
+            Circle circle = new Circle(new Point(lon, lat), new Distance(cacheDistance, RedisGeoCommands.DistanceUnit.KILOMETERS));
+            GeoResults<RedisGeoCommands.GeoLocation<Object>> results = geoOps.radius(GEO_KEY, circle);
+
+            if (results != null && !results.getContent().isEmpty()) {
+                GeoResult<RedisGeoCommands.GeoLocation<Object>> closestResult = results.getContent().stream()
+                        .min(Comparator.comparing(geoResult -> geoResult.getDistance().getValue())) // Find the closest result
+                        .orElse(null);
+
+                if (closestResult != null) {
+                    String closestWeatherKey = (String) closestResult.getContent().getName();
+                    log.info("Closest cached weather data found for key: {}", closestWeatherKey);
+                    return (WeatherData) redisTemplate.opsForValue().get(closestWeatherKey);
+                }
+            }
+            log.debug("No cached weather data found.");
+            return null;
+        } catch (Exception e) {
+            log.error("Error retrieving cached weather data: {}", e.getMessage());
+            return null;
+        }
     }
 
 }
