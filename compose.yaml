@@ -1,5 +1,12 @@
 services:
-  userservice:
+  eureka-server:
+    build: eureka-server
+    ports:
+      - 8761:8761
+    networks:
+      - smart-home-net
+
+  user-service:
     build: user-service
     ports:
       - 9091:9091
@@ -8,7 +15,7 @@ services:
     networks:
       - smart-home-net
 
-  deviceservice:
+  device-service:
     build: device-service
     ports:
       - 9092:9092
@@ -17,7 +24,7 @@ services:
     networks:
       - smart-home-net
 
-  scenarioservice:
+  scenario-service:
     build: scenario-service
     ports:
       - 9093:9093
@@ -26,7 +33,7 @@ services:
     networks:
       - smart-home-net
 
-  weatherservice:
+  weather-service:
     build: weather-service
     ports:
       - 9094:9094
